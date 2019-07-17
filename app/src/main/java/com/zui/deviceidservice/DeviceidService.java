@@ -4,7 +4,6 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -14,22 +13,32 @@ import android.util.Log;
 
 public class DeviceidService extends Service {
     private static boolean DBG = true;
-    private static String TAG = "DeviceId Service";
+    private static String TAG = "DeviceId_Service";
     private CommonUtils mCommon = null;
     private long mStarttime = 0;
 
     private BroadcastReceiver mDiServiceReceiver = null;
     private IntentFilter mDiServiceFilter = null;
     private static final String ACTION_ALARM_RESET = "zui.intent.action.ACTION_ALARM_RESET";
+
+    private AppManageReceiver mAppReceiver = null;
+    private IntentFilter mAppFilter = null;
+
     private PendingIntent mAlarmResetIntent = null;
 
     private void createDeviceidReceiver() {
         if (mDiServiceReceiver != null) return;
 
+        mAppFilter = new IntentFilter();
+        mAppFilter.addAction(Intent.ACTION_PACKAGE_ADDED);
+        mAppFilter.addAction(Intent.ACTION_PACKAGE_REMOVED);
+        mAppFilter.addDataScheme("package");
+
         mDiServiceFilter = new IntentFilter();
         mDiServiceFilter.addAction(ACTION_ALARM_RESET);
         mDiServiceFilter.addAction(Intent.ACTION_TIME_CHANGED);
-        ContentResolver cr = this.getContentResolver();
+        mAppReceiver = new AppManageReceiver();
+
         mDiServiceReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -51,8 +60,12 @@ public class DeviceidService extends Service {
 
     private void registeDeviceidReceiver() {
         if (mDiServiceReceiver != null && mDiServiceFilter != null) {
-            Log.v(TAG, "registe device id sreceiver");
+            Log.v(TAG, "liufeng, registe device id sreceiver");
             this.registerReceiver(mDiServiceReceiver,mDiServiceFilter);
+        }
+        if (mAppFilter != null && mAppReceiver != null) {
+            Log.v(TAG, "liufeng, registe app manager filter");
+            this.registerReceiver(mAppReceiver, mAppFilter);
         }
     }
 
@@ -67,6 +80,11 @@ public class DeviceidService extends Service {
             this.unregisterReceiver(mDiServiceReceiver);
             mDiServiceReceiver = null;
             mDiServiceFilter = null;
+        }
+        if (mAppReceiver != null) {
+            Log.v(TAG, "unregister app manager receiver");
+            mAppReceiver = null;
+            mAppFilter = null;
         }
     }
 
@@ -98,12 +116,26 @@ public class DeviceidService extends Service {
         public boolean isSupport() {
             return true;
         }
+
+        @Override
+        public String getVAID(String strpackage) {
+            String vaid = mCommon.getVAID(strpackage);
+            Log.v(TAG, "calling AVID package: " + strpackage + " .vaid: " + vaid);
+            return vaid;
+        }
+
+        @Override
+        public String getAAID(String strpackage) {
+            String aaid = mCommon.getAAID(strpackage);
+            Log.v(TAG, "calling AAid package: " + strpackage + " .aaid: " + aaid);
+            return aaid;
+        }
     };
 
     @Override
     public void onCreate() {
         super.onCreate();
-        Log.i(TAG, "======Service onCreate=======");
+        Log.i(TAG, "liufeng, ======Service onCreate=======");
         mCommon = CommonUtils.getInstance(this.getApplicationContext());
 
         // register BoradcastReceiver.

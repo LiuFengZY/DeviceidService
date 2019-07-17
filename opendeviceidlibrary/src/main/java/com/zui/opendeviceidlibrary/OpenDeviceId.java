@@ -4,7 +4,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.content.pm.ApplicationInfo;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
@@ -48,10 +47,6 @@ public class OpenDeviceId {
             Log.i(TAG, "Context is null.");
             throw new IllegalArgumentException("Context is null, must be new OpenDeviceId first");
         }
-        String packagename = mContext.getPackageName();
-        Log.d(TAG, "liufeng, getOAID package：" + packagename);
-        ApplicationInfo appinfo = mContext.getApplicationInfo();
-        Log.d(TAG, "liufeng, getOAID appinfo:" + appinfo.className + " ." + appinfo.packageName);
 
         try {
             if (mDeviceidInterface != null) {
@@ -69,10 +64,6 @@ public class OpenDeviceId {
             throw new IllegalArgumentException("Context is null, must be new OpenDeviceId first");
         }
 
-        String packagename = mContext.getPackageName();
-        Log.d(TAG, "liufeng, getUDID package：" + packagename);
-        ApplicationInfo appinfo = mContext.getApplicationInfo();
-        Log.d(TAG, "liufeng, getUDID appinfo:" + appinfo.className + " ." + appinfo.packageName);
         try {
             if (mDeviceidInterface != null) {
                 return mDeviceidInterface.getUDID();
@@ -96,6 +87,49 @@ public class OpenDeviceId {
         return false;
     }
 
+    public String getVAID() {
+        if (mContext == null) {
+            Log.i(TAG, "Context is null.");
+            throw new IllegalArgumentException("Context is null, must be new OpenDeviceId first");
+        }
+
+        String packagename = mContext.getPackageName();
+        Log.d(TAG, "liufeng, getVAID package：" + packagename);
+        if (packagename != null && !packagename.equals("")) {
+            try {
+                if (mDeviceidInterface != null) {
+                    return mDeviceidInterface.getVAID(packagename);
+                }
+            } catch (RemoteException e) {
+                Log.i(TAG, "getVAID error, RemoteException!");
+            }
+        } else {
+            Log.i(TAG, "input package is null!");
+        }
+        return null;
+    }
+
+    public String getAAID() {
+        if (mContext == null) {
+            Log.i(TAG, "Context is null.");
+            throw new IllegalArgumentException("Context is null, must be new OpenDeviceId first");
+        }
+
+        String packagename = mContext.getPackageName();
+        Log.d(TAG, "liufeng, getAAID package：" + packagename);
+        if (packagename != null && !packagename.equals("")) {
+            try {
+                if (mDeviceidInterface != null) {
+                    return mDeviceidInterface.getAAID(packagename);
+                }
+            } catch (RemoteException e) {
+                Log.i(TAG, "getAAID error, RemoteException!");
+            }
+        } else {
+            Log.i(TAG, "input package is null!");
+        }
+        return null;
+    }
     public void shutdown() {
         try {
             mContext.unbindService(mConnection);

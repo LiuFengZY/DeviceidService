@@ -5,4 +5,6 @@ interface IDeviceidInterface {
     String getOAID();
     String getUDID();
     boolean isSupport();
+    String getVAID(String strpackage);
+    String getAAID(String strpackage);
 }

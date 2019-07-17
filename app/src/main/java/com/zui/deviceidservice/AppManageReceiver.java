@@ -16,6 +16,9 @@ public class AppManageReceiver extends BroadcastReceiver {
         // TODO: This method is called when the BroadcastReceiver is receiving
         // an Intent broadcast.
         //throw new UnsupportedOperationException("Not yet implemented");
+        Log.i("liufeng", "liufeng,app action :" + intent.getAction());
+        Log.i("liufeng", "liufeng,app action :" + intent.getDataString());
+
         if (intent == null)
             return;
 
