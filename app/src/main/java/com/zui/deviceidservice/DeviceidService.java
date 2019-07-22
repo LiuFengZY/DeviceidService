@@ -13,7 +13,7 @@ import android.util.Log;
 
 public class DeviceidService extends Service {
     private static boolean DBG = true;
-    private static String TAG = "DeviceId_Service";
+    private static String TAG = "Deviceid-MainService";
     private CommonUtils mCommon = null;
     private long mStarttime = 0;
 

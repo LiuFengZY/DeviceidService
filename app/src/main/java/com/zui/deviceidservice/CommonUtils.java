@@ -6,19 +6,20 @@ import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
 import android.telephony.TelephonyManager;
+import com.zui.deviceidservice.db.AppInfo;
+import com.zui.deviceidservice.db.DBController;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Random;
 
-
 //import com.android.internal.telephony.Phone;
 //import com.android.internal.telephony.PhoneFactory;
 
 public class CommonUtils {
-    private static final String TAG = "Deviceid_CommonUtils";
+    private static final String TAG = "Deviceid-CommonUtils";
     private Context context;
-    private static CommonUtils sInstance;
+    private static CommonUtils sInstance = null;
 
     private static final String PREFERENCE_DEVICE_ID = "device_id";
     private static final String ITEM_UDID = "item_udid";
@@ -30,6 +31,7 @@ public class CommonUtils {
     private static final long defaultDelayTime = (30*1000L);
 
     private TelephonyManager mMSimTelephonyManager = null;
+    private DBController dbc = null;
 
     public static final String userid1 = "liufeng23@lenovo.com";
 
@@ -37,6 +39,7 @@ public class CommonUtils {
         context = c;
         mMSimTelephonyManager = (TelephonyManager) context
                 .getSystemService(Context.TELEPHONY_SERVICE);
+        dbc = new DBController(context);
     }
 
     public static CommonUtils getInstance(Context c) {
@@ -156,15 +159,49 @@ public class CommonUtils {
     }
 
     public String getVAID(String strpackage) {
-        Log.d(TAG, "getVAID, strpackage:" + strpackage);
-        //find userid.
+        String strVaid = dbc.getVAIDByPackageName(strpackage);
+        Log.d(TAG, "getVAID, strpackage:" + strpackage + " .strVaid: " + strVaid);
+        return strVaid;
+    }
 
-        return md5(userid1 + sIMEI);
+    public void insertVAID(String strpackage) {
+        String str = userid1 + getUDIDString();
+        AppInfo appinfo = new AppInfo();
+        appinfo.vaid = md5(str);
+        appinfo.aaid = md5(strpackage + sIMEI);
+        appinfo.developer = userid1;
+        appinfo.packagename = strpackage;
+        dbc.insert(appinfo);
+        Log.d(TAG, "vaid: " + appinfo.vaid + " .package:" + strpackage);
+    }
+
+    public void deleteVAID(String strpackage) {
+        String userid = getUserIdForPackage(strpackage);
+        // delete user vaid.
+    }
+
+    public void insertAAID(String strpackage) {
+        String str = strpackage + getUDIDString();
+        AppInfo appinfo = new AppInfo();
+        appinfo.aaid = md5(str);
+        appinfo.developer = userid1;
+        appinfo.packagename = strpackage;
+        dbc.insert(appinfo);
+        Log.d(TAG, "aaid: " + appinfo.aaid + " .package:" + strpackage);
     }
 
     public String getAAID(String strpackage) {
-        Log.d(TAG, "getAAID, strpackage: " + strpackage);
-        return md5(strpackage + sIMEI);
+        String strAaid = dbc.getAAIDByPackageName(strpackage);
+        Log.d(TAG, "getVAID, strpackage:" + strpackage + " .strAaid: " + strAaid);
+        return strAaid;
+    }
+
+    public void deleteAAID(String strpackage) {
+        AppInfo appinfo = new AppInfo();
+        appinfo.packagename = strpackage;
+        dbc.delete(appinfo);
+        //check the user all package.
+
     }
 
 }
