@@ -21,6 +21,8 @@ public class BootReceiver extends BroadcastReceiver {
         if (BOOT_COMPLETED.equals(action)) {
             Intent startService = new Intent(context, DeviceidService.class);
             context.startForegroundService(startService);
+            //This is for system app.
+            //context.startService(startService);
             return;
         }
     }

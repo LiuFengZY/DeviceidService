@@ -27,6 +27,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 + AppInfo.KEY_AAID + " TEXT)";
         db.execSQL(strsql);
     }
+
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         db.execSQL("DROP TABLE IF EXISTS " + AppInfo.TABLE);

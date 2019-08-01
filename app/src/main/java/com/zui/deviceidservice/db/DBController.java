@@ -77,4 +77,34 @@ public class DBController {
         return appinfo.aaid;
     }
 
+    public boolean isPackageNameExisted(String str) {
+        boolean isExisted = false;
+        SQLiteDatabase db = dbh.getReadableDatabase();
+        String strsql = "SELECT " +
+                AppInfo.KEY_ID + " FROM " + AppInfo.TABLE
+                + " WHERE " + AppInfo.KEY_PACKAGE + "=?";
+        Cursor cr = db.rawQuery(strsql, new String[]{str});
+        if (cr.getCount() > 0) {
+            isExisted = true;
+       }
+        cr.close();
+        db.close();
+        return isExisted;
+    }
+
+    public boolean isUserIdExisted(String userid) {
+        boolean isExisted = false;
+        SQLiteDatabase db = dbh.getReadableDatabase();
+        String strsql = "SELECT " +
+                AppInfo.KEY_ID + " FROM " + AppInfo.TABLE
+                + " WHERE " + AppInfo.KEY_DEVELOPER + "=?";
+        Cursor cr = db.rawQuery(strsql, new String[]{userid});
+        if (cr.getCount() > 0) {
+            isExisted = true;
+        }
+        cr.close();
+        db.close();
+        return isExisted;
+    }
+
 }

@@ -59,7 +59,7 @@ public class DeviceidService extends Service {
     }
 
     private void registeDeviceidReceiver() {
-        if (mDiServiceReceiver != null && mDiServiceFilter != null) {
+        if (CommonUtils.DBG_EANBLED && mDiServiceReceiver != null && mDiServiceFilter != null) {
             Log.v(TAG, "liufeng, registe device id sreceiver");
             this.registerReceiver(mDiServiceReceiver,mDiServiceFilter);
         }
@@ -150,8 +150,10 @@ public class DeviceidService extends Service {
         if (!checkOAID()) {
             mCommon.updateOAID(createOAID());
         }
-        cancelAlarm();
-        startAlarm();
+        if (CommonUtils.DBG_EANBLED) {
+            cancelAlarm();
+            startAlarm();
+        }
     }
 
     @Override

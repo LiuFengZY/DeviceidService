@@ -13,6 +13,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Random;
 
+//These are for system app System/app/DeviceidService.
 //import com.android.internal.telephony.Phone;
 //import com.android.internal.telephony.PhoneFactory;
 
@@ -28,10 +29,13 @@ public class CommonUtils {
     private int mSpMode = 0;
     private static String sIMEI = "";
 
-    private static final long defaultDelayTime = (30*1000L);
+    private static final long defaultDelayTime = (10*60*1000L);
+    public static final boolean DBG_EANBLED = true;
 
     private TelephonyManager mMSimTelephonyManager = null;
     private DBController dbc = null;
+
+    private static final String GET_USERID_URL = "";
 
     public static final String userid1 = "liufeng23@lenovo.com";
 
@@ -74,6 +78,7 @@ public class CommonUtils {
 
     private String getImeiString() {
         String imeiString = "";
+        //These are for system app. system/app/DeviceidService.
 //        int slotCount = mMSimTelephonyManager.getSimCount();
 //        for (int slotId = 0; slotId < slotCount; slotId ++) {
 //            final Phone phone = PhoneFactory.getPhone(slotId);
@@ -152,10 +157,24 @@ public class CommonUtils {
         editor.commit();
     }
 
-    private String getUserIdForPackage(String strpackage) {
+    //http interface get userid.
+    private void insertAAIDThread(final String strpackage) {
         String userid = "";
+        SimpleAsyncHttpClient.HttpCallback<String> httpcallback = new SimpleAsyncHttpClient.HttpCallback<String>() {
+            @Override
+            public void onSuccess(String response) {
+                Log.d(TAG, "liufeng, http. onSuccess response:" + response);
 
-        return userid;
+                insertVAIDAndVVID(response, strpackage);
+            }
+
+            @Override
+            public void onError(String error) {
+                Log.e(TAG, "liufeng, http. onError response:" + error);
+            }
+        };
+        SimpleAsyncHttpClient.doHttpRequest(SimpleAsyncHttpClient.HTTP_REQUEST_METHOD.HTTP_POST,
+                GET_USERID_URL, httpcallback, strpackage);
     }
 
     public String getVAID(String strpackage) {
@@ -164,30 +183,26 @@ public class CommonUtils {
         return strVaid;
     }
 
-    public void insertVAID(String strpackage) {
-        String str = userid1 + getUDIDString();
-        AppInfo appinfo = new AppInfo();
-        appinfo.vaid = md5(str);
-        appinfo.aaid = md5(strpackage + sIMEI);
-        appinfo.developer = userid1;
-        appinfo.packagename = strpackage;
-        dbc.insert(appinfo);
-        Log.d(TAG, "vaid: " + appinfo.vaid + " .package:" + strpackage);
-    }
-
-    public void deleteVAID(String strpackage) {
-        String userid = getUserIdForPackage(strpackage);
-        // delete user vaid.
-    }
-
     public void insertAAID(String strpackage) {
+        if (dbc.isPackageNameExisted(strpackage)) {
+            Log.d(TAG, " aaid already isExisted! return.");
+            return;
+        }
+        // this is async method, so wait the call back.
+        insertAAIDThread(strpackage);
+    }
+
+    private void insertVAIDAndVVID(String userid, String strpackage) {
+        // response is userid
         String str = strpackage + getUDIDString();
         AppInfo appinfo = new AppInfo();
         appinfo.aaid = md5(str);
-        appinfo.developer = userid1;
+        appinfo.vaid = md5(userid + getUDIDString());
+        appinfo.developer = userid;
         appinfo.packagename = strpackage;
         dbc.insert(appinfo);
-        Log.d(TAG, "aaid: " + appinfo.aaid + " .package:" + strpackage);
+        Log.d(TAG, "do insert aaid: " + appinfo.aaid + " .package:" + strpackage);
+        Log.d(TAG, "do insert vaid: " + appinfo.vaid + " .userid:" + userid);
     }
 
     public String getAAID(String strpackage) {
@@ -200,8 +215,6 @@ public class CommonUtils {
         AppInfo appinfo = new AppInfo();
         appinfo.packagename = strpackage;
         dbc.delete(appinfo);
-        //check the user all package.
-
     }
 
 }

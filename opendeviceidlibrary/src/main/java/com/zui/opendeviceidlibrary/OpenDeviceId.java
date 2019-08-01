@@ -14,37 +14,49 @@ public class OpenDeviceId {
     private Context mContext = null;
     private IDeviceidInterface mDeviceidInterface;
     private static String TAG = "OpenDeviceId library";
+    private static boolean DBG = false;
     private ServiceConnection mConnection;
+    private CallBack mCallerCallBack = null;
 
-    public OpenDeviceId(Context context) {
+    public interface CallBack <T>{
+        void serviceConnected(T service);
+        //void serviceDisconnected(OpenDeviceId service);
+    }
+
+    public OpenDeviceId(Context context, OpenDeviceId.CallBack listener) {
         if (context == null) {
             throw new NullPointerException("Context can not be null.");
         }
         // this is app context.
         mContext = context;
+        mCallerCallBack = listener;
+
         mConnection = new ServiceConnection() {
             public synchronized void onServiceConnected(ComponentName className, IBinder service) {
                 mDeviceidInterface = IDeviceidInterface.Stub.asInterface(service);
-                Log.i(TAG, "Service onServiceConnected");
+                if (mCallerCallBack != null) {
+                    mCallerCallBack.serviceConnected(OpenDeviceId.this);
+                }
+               logPrintI("Service onServiceConnected");
             }
             public void onServiceDisconnected(ComponentName className) {
                 mDeviceidInterface = null;
-                Log.i(TAG, "Service onServiceDisconnected");
+                logPrintI("Service onServiceDisconnected");
             }
         };
         Intent intent = new Intent();
         intent.setClassName("com.zui.deviceidservice", "com.zui.deviceidservice.DeviceidService");
         boolean bindSuccessful = mContext.bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
         if (bindSuccessful) {
-            Log.i(TAG, "bindService Successful!");
+            logPrintI("bindService Successful!");
         } else {
-            Log.i(TAG, "bindService Failed!");
+            logPrintI("bindService Failed!");
         }
     }
 
     public String getOAID() {
         if (mContext == null) {
-            Log.i(TAG, "Context is null.");
+            logPrintE("Context is null.");
             throw new IllegalArgumentException("Context is null, must be new OpenDeviceId first");
         }
 
@@ -53,14 +65,15 @@ public class OpenDeviceId {
                 return mDeviceidInterface.getOAID();
             }
         } catch (RemoteException e) {
-            Log.i(TAG, "getOAID error, RemoteException!");
+            logPrintE("getOAID error, RemoteException!");
+            e.printStackTrace();
         }
         return null;
     }
 
     public String getUDID() {
         if (mContext == null) {
-            Log.i(TAG, "Context is null.");
+            logPrintE("Context is null.");
             throw new IllegalArgumentException("Context is null, must be new OpenDeviceId first");
         }
 
@@ -69,7 +82,8 @@ public class OpenDeviceId {
                 return mDeviceidInterface.getUDID();
             }
         } catch (RemoteException e) {
-            Log.i(TAG, "getUDID error, RemoteException!");
+            logPrintE("getUDID error, RemoteException!");
+            e.printStackTrace();
         }
         return null;
     }
@@ -77,11 +91,11 @@ public class OpenDeviceId {
     public boolean isSupported() {
         try {
             if (mDeviceidInterface != null) {
-                Log.i(TAG, "Device support opendeviceid");
+                logPrintI("Device support opendeviceid");
                 return mDeviceidInterface.isSupport();
             }
         } catch (RemoteException e) {
-            Log.i(TAG, "isSupport error, RemoteException!");
+            logPrintE("isSupport error, RemoteException!");
             return false;
         }
         return false;
@@ -89,58 +103,67 @@ public class OpenDeviceId {
 
     public String getVAID() {
         if (mContext == null) {
-            Log.i(TAG, "Context is null.");
+            logPrintI("Context is null.");
             throw new IllegalArgumentException("Context is null, must be new OpenDeviceId first");
         }
 
         String packagename = mContext.getPackageName();
-        Log.d(TAG, "liufeng, getVAID package：" + packagename);
+        logPrintI("liufeng, getVAID package：" + packagename);
         if (packagename != null && !packagename.equals("")) {
             try {
                 if (mDeviceidInterface != null) {
                     return mDeviceidInterface.getVAID(packagename);
                 }
             } catch (RemoteException e) {
-                Log.i(TAG, "getVAID error, RemoteException!");
+                logPrintE("getVAID error, RemoteException!");
+                e.printStackTrace();
             }
         } else {
-            Log.i(TAG, "input package is null!");
+            logPrintI("input package is null!");
         }
         return null;
     }
 
     public String getAAID() {
         if (mContext == null) {
-            Log.i(TAG, "Context is null.");
+            logPrintI("Context is null.");
             throw new IllegalArgumentException("Context is null, must be new OpenDeviceId first");
         }
 
         String packagename = mContext.getPackageName();
-        Log.d(TAG, "liufeng, getAAID package：" + packagename);
+        logPrintI("liufeng, getAAID package：" + packagename);
         if (packagename != null && !packagename.equals("")) {
             try {
                 if (mDeviceidInterface != null) {
                     return mDeviceidInterface.getAAID(packagename);
                 }
             } catch (RemoteException e) {
-                Log.i(TAG, "getAAID error, RemoteException!");
+                logPrintE("getAAID error, RemoteException!");
             }
         } else {
-            Log.i(TAG, "input package is null!");
+            logPrintI("input package is null!");
         }
         return null;
     }
     public void shutdown() {
         try {
             mContext.unbindService(mConnection);
-            Log.i(TAG, "unBind Service successful");
+            logPrintI("unBind Service successful");
         } catch (IllegalArgumentException e) {
-            Log.i(TAG, "unBind Service exception");
+            logPrintE("unBind Service exception");
         }
         mDeviceidInterface = null;
     }
 
-    public static void testJar() {
-        Log.i(TAG, "This is test jar output");
+    public void setLogEnable(boolean enable) {
+        this.DBG = enable;
+    }
+
+    private void logPrintI(String str) {
+        if (DBG) Log.i(TAG, str);
+    }
+
+    private void logPrintE(String str) {
+        if (DBG) Log.e(TAG, str);
     }
 }

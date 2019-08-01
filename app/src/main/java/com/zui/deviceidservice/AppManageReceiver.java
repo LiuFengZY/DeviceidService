@@ -28,7 +28,7 @@ public class AppManageReceiver extends BroadcastReceiver {
         CommonUtils cu = CommonUtils.getInstance(context);
         if (action.equals(APP_ADDED)) {
             Log.i("liufeng", "APP ADDED" + intent.getDataString());
-            cu.insertVAID(intent.getDataString().split(":")[1]);
+            cu.insertAAID(intent.getDataString().split(":")[1]);
         } else if (action.equals(APP_REMOVED)) {
             Log.i("liufeng", "APP REMOVED：" + intent.getDataString());
             cu.deleteAAID(intent.getDataString().split(":")[1]);
