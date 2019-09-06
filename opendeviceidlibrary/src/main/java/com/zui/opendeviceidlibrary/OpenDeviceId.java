@@ -18,9 +18,9 @@ public class OpenDeviceId {
     private ServiceConnection mConnection;
     private CallBack mCallerCallBack = null;
 
-    public interface CallBack <T>{
-        void serviceConnected(T service);
-        //void serviceDisconnected(OpenDeviceId service);
+    public interface CallBack<T> {
+        void serviceConnected(T status);
+        //void serviceDisconnected(T service);
     }
 
     public OpenDeviceId(Context context, OpenDeviceId.CallBack listener) {
@@ -35,7 +35,7 @@ public class OpenDeviceId {
             public synchronized void onServiceConnected(ComponentName className, IBinder service) {
                 mDeviceidInterface = IDeviceidInterface.Stub.asInterface(service);
                 if (mCallerCallBack != null) {
-                    mCallerCallBack.serviceConnected(OpenDeviceId.this);
+                    mCallerCallBack.serviceConnected("Deviceid Service Connected");
                 }
                logPrintI("Service onServiceConnected");
             }

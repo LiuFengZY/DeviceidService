@@ -4,11 +4,17 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.database.ContentObserver;
+import android.net.Uri;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.os.SystemClock;
+import android.provider.Settings;
 import android.util.Log;
 
 public class DeviceidService extends Service {
@@ -16,6 +22,9 @@ public class DeviceidService extends Service {
     private static String TAG = "Deviceid-MainService";
     private CommonUtils mCommon = null;
     private long mStarttime = 0;
+
+    private boolean mOaidEnabled = true;
+    private static final String ZUI_OAID_ENABLED = "zui_deviceid_oaid_enabled";
 
     private BroadcastReceiver mDiServiceReceiver = null;
     private IntentFilter mDiServiceFilter = null;
@@ -25,6 +34,21 @@ public class DeviceidService extends Service {
     private IntentFilter mAppFilter = null;
 
     private PendingIntent mAlarmResetIntent = null;
+
+    private OaidEnableObserver mOaidObserver = null;
+
+    private Handler mHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+            case 1:
+                Log.d(TAG, "handler test.");
+                break;
+            default:
+                break;
+            }
+        }
+    };
 
     private void createDeviceidReceiver() {
         if (mDiServiceReceiver != null) return;
@@ -93,10 +117,10 @@ public class DeviceidService extends Service {
         public String getOAID() {
             String sOaid = mCommon.getOAIDString();
             Log.i(TAG, "sOaid: preference:" + sOaid);
-            if (sOaid != null && !"".equals(sOaid)) {
+            if (mOaidEnabled && sOaid != null && !"".equals(sOaid)) {
                 return sOaid;
             } else {
-                sOaid = "unKnown oaid";
+                sOaid = "00000000000000000000000000000000";
                 return sOaid;
             }
         }
@@ -154,6 +178,9 @@ public class DeviceidService extends Service {
             cancelAlarm();
             startAlarm();
         }
+
+        mOaidObserver = new OaidEnableObserver(this.getApplicationContext(), mHandler);
+        getContentResolver().registerContentObserver(Settings.Global.getUriFor(ZUI_OAID_ENABLED), true, mOaidObserver);
     }
 
     @Override
@@ -236,5 +263,42 @@ public class DeviceidService extends Service {
         cancelAlarm();
         startAlarm();
         Log.d(TAG, "liufeng, reCreate OAID successful");
+    }
+
+    private void disableOAID() {
+        mCommon.updateOAID("00000000000000000000000000000000");
+    }
+
+    private void enableOAID() {
+        String str = mCommon.createOAIDString();
+        mCommon.updateOAID(str);
+    }
+
+    private class OaidEnableObserver extends ContentObserver {
+        ContentResolver mResolver;
+        Uri oaidUri = Settings.Global.getUriFor(ZUI_OAID_ENABLED);
+
+        public OaidEnableObserver(Context context, Handler handler) {
+            super(handler);
+            mResolver = context.getContentResolver();
+            mOaidEnabled = Settings.Global.getInt(mResolver, ZUI_OAID_ENABLED, 1) != 0;
+            Log.d(TAG, "oaid status :" + mOaidEnabled);
+            if (!mOaidEnabled) {
+                disableOAID();
+            }
+        }
+
+        @Override
+        public void onChange(boolean selfChange, Uri uri) {
+            if (oaidUri.equals(uri)) {
+                mOaidEnabled = Settings.Global.getInt(mResolver, ZUI_OAID_ENABLED, 1) != 0;
+                Log.d(TAG, "oaid status onchange: " + mOaidEnabled);
+                if (mOaidEnabled) {
+                    enableOAID();
+                } else {
+                    disableOAID();
+                }
+            }
+        }
     }
 }

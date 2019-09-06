@@ -30,12 +30,12 @@ public class CommonUtils {
     private static String sIMEI = "";
 
     private static final long defaultDelayTime = (10*60*1000L);
-    public static final boolean DBG_EANBLED = true;
+    public static final boolean DBG_EANBLED = false;
 
     private TelephonyManager mMSimTelephonyManager = null;
     private DBController dbc = null;
 
-    private static final String GET_USERID_URL = "";
+    private static final String GET_USERID_URL = "https://adapi.lenovomm.com/gwouter/appbiz/lestoreDeveloperInfo/api/get?pkgname=";
 
     public static final String userid1 = "liufeng23@lenovo.com";
 
@@ -170,11 +170,14 @@ public class CommonUtils {
 
             @Override
             public void onError(String error) {
-                Log.e(TAG, "liufeng, http. onError response:" + error);
+                Log.e(TAG, "liufeng, get userid error.http. onError response:" + error);
             }
         };
-        SimpleAsyncHttpClient.doHttpRequest(SimpleAsyncHttpClient.HTTP_REQUEST_METHOD.HTTP_POST,
-                GET_USERID_URL, httpcallback, strpackage);
+        // data should be one json data.
+        //SimpleAsyncHttpClient.doHttpRequest(SimpleAsyncHttpClient.HTTP_REQUEST_METHOD.HTTP_GET,
+         //       GET_USERID_URL, httpcallback, "package:" + strpackage);
+        SimpleAsyncHttpClient.doHttpRequest(SimpleAsyncHttpClient.HTTP_REQUEST_METHOD.HTTP_GET,
+                GET_USERID_URL + strpackage, httpcallback, null);
     }
 
     public String getVAID(String strpackage) {
