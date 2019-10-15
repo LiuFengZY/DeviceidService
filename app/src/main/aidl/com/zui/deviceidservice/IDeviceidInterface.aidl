@@ -7,4 +7,5 @@ interface IDeviceidInterface {
     boolean isSupport();
     String getVAID(String strpackage);
     String getAAID(String strpackage);
+    boolean createAAIDForPackageName(String strpackage);
 }

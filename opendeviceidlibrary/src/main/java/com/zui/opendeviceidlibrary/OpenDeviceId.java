@@ -19,11 +19,11 @@ public class OpenDeviceId {
     private CallBack mCallerCallBack = null;
 
     public interface CallBack<T> {
-        void serviceConnected(T status);
+        void serviceConnected(T status, OpenDeviceId service);
         //void serviceDisconnected(T service);
     }
 
-    public OpenDeviceId(Context context, OpenDeviceId.CallBack listener) {
+    public int init(Context context, OpenDeviceId.CallBack<String> listener) {
         if (context == null) {
             throw new NullPointerException("Context can not be null.");
         }
@@ -35,9 +35,9 @@ public class OpenDeviceId {
             public synchronized void onServiceConnected(ComponentName className, IBinder service) {
                 mDeviceidInterface = IDeviceidInterface.Stub.asInterface(service);
                 if (mCallerCallBack != null) {
-                    mCallerCallBack.serviceConnected("Deviceid Service Connected");
+                    mCallerCallBack.serviceConnected("Deviceid Service Connected", OpenDeviceId.this);
                 }
-               logPrintI("Service onServiceConnected");
+                logPrintI("Service onServiceConnected");
             }
             public void onServiceDisconnected(ComponentName className) {
                 mDeviceidInterface = null;
@@ -49,9 +49,15 @@ public class OpenDeviceId {
         boolean bindSuccessful = mContext.bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
         if (bindSuccessful) {
             logPrintI("bindService Successful!");
+            return 1;
         } else {
             logPrintI("bindService Failed!");
+            return -1;
         }
+    }
+
+    public OpenDeviceId() {
+
     }
 
     public String getOAID() {
@@ -83,6 +89,9 @@ public class OpenDeviceId {
             }
         } catch (RemoteException e) {
             logPrintE("getUDID error, RemoteException!");
+            e.printStackTrace();
+        } catch (Exception e) {
+            logPrintE("getUDID error, Exception!");
             e.printStackTrace();
         }
         return null;
@@ -132,10 +141,17 @@ public class OpenDeviceId {
 
         String packagename = mContext.getPackageName();
         logPrintI("liufeng, getAAID package：" + packagename);
+        String retStr = null;
         if (packagename != null && !packagename.equals("")) {
             try {
                 if (mDeviceidInterface != null) {
-                    return mDeviceidInterface.getAAID(packagename);
+                    retStr = mDeviceidInterface.getAAID(packagename);
+                    if (retStr == null || "".equals(retStr)) {
+                        boolean ifCreate = mDeviceidInterface.createAAIDForPackageName(packagename);
+                        if (ifCreate) {
+                            retStr = mDeviceidInterface.getAAID(packagename);
+                        }
+                    }
                 }
             } catch (RemoteException e) {
                 logPrintE("getAAID error, RemoteException!");
@@ -143,8 +159,9 @@ public class OpenDeviceId {
         } else {
             logPrintI("input package is null!");
         }
-        return null;
+        return retStr;
     }
+
     public void shutdown() {
         try {
             mContext.unbindService(mConnection);

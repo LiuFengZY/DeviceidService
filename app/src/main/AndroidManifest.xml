@@ -1,11 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.zui.deviceidservice"
-    android:sharedUserId="android.uid.phone"
     >
+    <permission android:name="com.zui.permission.GET_UDID"
+        android:protectionLevel="signatureOrSystem" />
+
+    <uses-sdk android:targetSdkVersion="Q" />
 
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="com.zui.xlog.service"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:label="@string/app_name"

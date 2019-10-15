@@ -34,10 +34,10 @@ dependencies {
 }
 
 task makeJar(type: Copy) {
-    from "build/intermediates/classes/release/"
+    from "build/intermediates/bundles/release/"
     from 'src/main/aidl/'
     into('build/libs')
-    destinationDir = file('build/libs')
+    //destinationDir = file('build/libs')
     include('classes.jar')
     rename('classes.jar', 'opendeviceidlibrary.jar')
 }

@@ -7,6 +7,8 @@ import com.zui.deviceidservice.db.Encoder;
 
 import org.json.JSONObject;
 import org.json.JSONTokener;
+import org.json.JSONException;
+import org.json.JSONArray;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -26,6 +28,7 @@ public class SimpleAsyncHttpClient {
     private static int READ_TIME_OUT = 10 * 1000;
     private static int CONNECT_TIME_OUT = 10 * 1000;
     private static final String ENCODE = "UTF-8";
+    private static final boolean DBG = true;
 
     public interface HttpCallback <T> {
         public void onSuccess(T response);
@@ -97,13 +100,17 @@ public class SimpleAsyncHttpClient {
             HttpURLConnection connection = null;
             InputStream is = null;
             BufferedReader br = null;
+            Log.d(TAG, "liufeng http get111, url : " + url.toString());
             try {
                 connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("GET");
-                connection.setConnectTimeout(15000);
-                connection.setReadTimeout(60000);
-
+                connection.setReadTimeout(READ_TIME_OUT);
+                connection.setConnectTimeout(CONNECT_TIME_OUT);
+                connection.setUseCaches(false);
+                connection.setRequestProperty("Charset", "UTF-8");
+                connection.setRequestProperty("Content-Type", "application/encrypted-json");
                 connection.connect();
+                Log.d(TAG, "liufeng http get, connection : " + connection.getResponseCode());
                 if (connection.getResponseCode() == 200) {
                     is = connection.getInputStream();
                     br = new BufferedReader(new InputStreamReader(is, "UTF-8"));
@@ -114,12 +121,34 @@ public class SimpleAsyncHttpClient {
                         sbf.append(temp);
                         sbf.append("\r\n");
                     }
-                    Log.d(TAG, "liufeng http post, read111 : " + sbf.toString());
-                    mCallback.onSuccess(sbf.toString());
+                    if (DBG) Log.d(TAG, "liufeng http get, return : " + sbf.toString());
+
+                    JSONTokener jsonParser = new JSONTokener(new String(sbf));
+                    JSONObject object = (JSONObject)jsonParser.nextValue();
+                    String code = object.getString("code");
+                    String msg = object.getString("msg");
+                    if (DBG) Log.d(TAG, "return code:" + code);
+                    if (DBG) Log.d(TAG, "return msg:" + msg);
+                    if ("0".equals(code) && "success".equals(msg)) {
+                        JSONArray jsa = (JSONArray)object.getJSONArray("data");
+                        JSONObject object2 = (JSONObject)jsa.get(0);
+                        String developerId = object2.getString("developerId");
+                        String applicationDate = object2.getString("applicationDate");
+                        if (DBG) Log.d(TAG, "developerid:" + developerId);
+                        if (DBG) Log.d(TAG, "applicationDate:" + applicationDate);
+                        mCallback.onSuccess(developerId);
+                    } else {
+                        mCallback.onError("response code error:" + code);
+                    }
+                } else {
+                    mCallback.onError("response code error: " + connection.getResponseCode());
                 }
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             } catch (IOException e) {
+                Log.d(TAG, "liufeng http get,IO Exception : ");
+                e.printStackTrace();
+            } catch (JSONException e) {
                 e.printStackTrace();
             } finally {
                 if (null != br) {
@@ -175,6 +204,8 @@ public class SimpleAsyncHttpClient {
             HttpURLConnection urlConnection = null;
             InputStream is = null;
             try {
+                Log.d(TAG, "liufeng, http post, url " + mUrl);
+                Log.d(TAG, "liufeng, http post, data:" + mData);
                 urlConnection = (HttpURLConnection) url.openConnection();
                 urlConnection.setDoInput(true);
                 urlConnection.setDoOutput(true);
@@ -182,16 +213,15 @@ public class SimpleAsyncHttpClient {
                 urlConnection.setConnectTimeout(CONNECT_TIME_OUT);
                 urlConnection.setRequestMethod("POST");
                 urlConnection.setUseCaches(false);
-                urlConnection.setRequestProperty("connection", "close");
                 urlConnection.setRequestProperty("Charset", "UTF-8");
-                urlConnection.setRequestProperty("Content-Type", "application/encrypted-json");
+                urlConnection.setRequestProperty("Content-Type", "application/json");
                 urlConnection.setRequestProperty("Content-Length", String.valueOf(mData.length()));
                 urlConnection.connect();
                 OutputStream os = urlConnection.getOutputStream();
                 os.write(mData.getBytes());
                 os.flush();
                 int code = urlConnection.getResponseCode();
-
+                Log.d(TAG, "liufeng http code.response:" + code);
                 if (code >= HttpURLConnection.HTTP_OK && code < HttpURLConnection.HTTP_BAD_REQUEST) {
                     is = urlConnection.getInputStream();
                     byte sRead[] = read(is);
@@ -202,6 +232,7 @@ public class SimpleAsyncHttpClient {
                     String userid = object.getString("userid");
                     mCallback.onSuccess(userid);
                 } else {
+
                     is = urlConnection.getErrorStream();
                     byte sRead[] = read(is);
                     String responseError = new String(sRead, ENCODE);
